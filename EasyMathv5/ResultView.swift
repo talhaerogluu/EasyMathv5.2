@@ -16,11 +16,19 @@ struct ResultView: View {
                             .foregroundColor(.red)
                             .padding()
                     } else {
-                        ForEach(result.components(separatedBy: "\n"), id: \.self) { step in
-                            Text("• \(step)")
-                                .padding(.vertical, 4)
-                                .font(.body)
-                                .foregroundColor(.primary)
+                        let steps = result.components(separatedBy: "\n").filter { !$0.isEmpty }
+                        
+                        if steps.isEmpty {
+                            Text("Çözüm bulunamadı veya işlem başarısız.")
+                                .foregroundColor(.red)
+                                .padding()
+                        } else {
+                            ForEach(steps, id: \.self) { step in
+                                Text("• \(step)")
+                                    .padding(.vertical, 4)
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                            }
                         }
                     }
                 }
@@ -28,7 +36,8 @@ struct ResultView: View {
             }
 
             Button(action: {
-                if let window = UIApplication.shared.windows.first {
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = windowScene.windows.first {
                     window.rootViewController = UIHostingController(rootView: HomePageView())
                     window.makeKeyAndVisible()
                 }
@@ -41,6 +50,9 @@ struct ResultView: View {
                     .cornerRadius(10)
             }
             .padding(.top, 20)
+        }
+        .onAppear {
+            print("ResultView Görüntülendi. Gelen Sonuç: \(result)")
         }
     }
 }

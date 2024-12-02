@@ -48,49 +48,52 @@ struct CameraView: View {
             return
         }
 
-        ocrService.performOCR(on: enhancedImage) { result in
-            switch result {
-            case .success(let equation):
-                // Denklemi temizle
-                var cleanedEquation = equation
-                    .replacingOccurrences(of: " ", with: "") // Boşlukları kaldır
-                    .replacingOccurrences(of: "x2", with: "x^2") // x2 → x^2 dönüşümü
-                    .replacingOccurrences(of: "(?<=\\d)x", with: "*x", options: .regularExpression)
-                    .replacingOccurrences(of: "(?<=x)(\\d)", with: "*$1", options: .regularExpression)
+        func processCapturedPhoto(_ image: UIImage) {
+            guard let enhancedImage = image.enhancedForOCR() else {
+                print("Görüntü işlenemedi.")
+                return
+            }
 
-                // API'ye gönderilecek denklemi kontrol et
-                if !cleanedEquation.contains("=") {
-                    cleanedEquation += "=0" // Eşitlik ekle (ör: eksikse)
-                }
+            ocrService.performOCR(on: enhancedImage) { result in
+                switch result {
+                case .success(let equation):
+                    print("OCR Çıktısı (Ham): \(equation)") // OCR'nin ham çıktısı
 
-                print("Düzeltilmiş Denklem (API'ye Gönderilen): \(cleanedEquation)")
+                    let cleanedEquation = equation
+                        .replacingOccurrences(of: " ", with: "") // Boşlukları temizle
+                        .replacingOccurrences(of: "x2", with: "x^2") // x2 -> x^2 dönüşümü
+                        .replacingOccurrences(of: "(?<=\\d)x", with: "*x", options: .regularExpression) // Sayı ve x arasında çarpma işareti ekle
+                        .replacingOccurrences(of: "(?<=x)(\\d)", with: "*$1", options: .regularExpression) // x'ten sonra sayı varsa çarpma ekle
 
-                wolframService.solveEquation(equation: cleanedEquation) { apiResult in
-                    switch apiResult {
-                    case .success(let solution):
-                        DispatchQueue.main.async {
-                            equationResult = solution
-                            showResult = true
-                        }
-                    case .failure(let error):
-                        DispatchQueue.main.async {
-                            equationResult = "API Hatası: \(error.localizedDescription)"
-                            showResult = true
+                    print("OCR Çıktısı (Temizlenmiş): \(cleanedEquation)") // Temizlenmiş denklem
+
+                    // API'ye gönderim
+                    wolframService.solveEquation(equation: cleanedEquation) { apiResult in
+                        switch apiResult {
+                        case .success(let solution):
+                            DispatchQueue.main.async {
+                                print("API'den Gelen Çözüm: \(solution)") // API sonucunu kontrol et
+                                equationResult = solution
+                                showResult = true
+                            }
+                        case .failure(let error):
+                            DispatchQueue.main.async {
+                                print("API Hatası: \(error.localizedDescription)") // API hatası kontrolü
+                                equationResult = "API Hatası: \(error.localizedDescription)"
+                                showResult = true
+                            }
                         }
                     }
-                }
-            case .failure(let error):
-                DispatchQueue.main.async {
-                    equationResult = "OCR Hatası: \(error.localizedDescription)"
-                    showResult = true
+                case .failure(let error):
+                    DispatchQueue.main.async {
+                        print("OCR Hatası: \(error.localizedDescription)") // OCR hatası kontrolü
+                        equationResult = "OCR Hatası: \(error.localizedDescription)"
+                        showResult = true
+                    }
                 }
             }
         }
+
     }
-
-
-    
-    
-    
 
 }

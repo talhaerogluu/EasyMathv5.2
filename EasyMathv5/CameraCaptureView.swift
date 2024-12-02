@@ -36,3 +36,4 @@ struct CameraCaptureView: UIViewControllerRepresentable {
         }
     }
 }
+//sdfsdfsdfsdfsadgadsgsdfgasd
