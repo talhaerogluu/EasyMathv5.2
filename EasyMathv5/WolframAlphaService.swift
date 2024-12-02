@@ -1,7 +1,7 @@
 import Foundation
 
 class WolframAlphaService {
-    private let apiKey = "3G7J2P-Q3WTUGW93G"
+    private let apiKey = "3G7J2P-J8TJHWAW9L"
 
     func solveEquation(equation: String, completion: @escaping (Result<String, Error>) -> Void) {
         let query = equation.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
